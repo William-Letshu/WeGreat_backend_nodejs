@@ -33,8 +33,8 @@ async function createUser(user: User): Promise<User> {
   const hashedPassword = await bcrypt.hash(user.password, salt);
 
   const result = await pool.query(
-    `INSERT INTO users (username, email, password, first_name, second_names, surname, identity_document, disabled)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+    `INSERT INTO users (username, email, password, first_name, second_names, surname, identity_document, verified, dob, verification_code, password_reset_code, disabled)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
     [
       user.username,
       user.email,
@@ -43,12 +43,17 @@ async function createUser(user: User): Promise<User> {
       user.second_names,
       user.surname,
       user.identity_document,
+      user.verified,
+      user.dob,
+      user.verification_code,
+      user.password_reset_code,
       user.disabled,
     ]
   );
 
   return new User(result.rows[0]);
 }
+
 
 async function updateUser(id: number, user: Partial<User>): Promise<User | null> {
   const result = await pool.query(

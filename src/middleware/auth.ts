@@ -1,75 +1,27 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-import { getUserByEmail, getMerchantByEmail } from "../database";
-import { User } from "../models/User";
-import { Merchant } from "../models/Merchant";
-require("dotenv").config();
+import {AnyZodObject} from "zod";
 
-interface TokenPayload {
-  id: number;
-  email: string;
-  role: string;
-}
-const JWT_SECRET: string = process.env.JWT_SECRET!;
-
-export async function authenticateUser(
-  req: Request & { user?: User },
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    const authorizationHeader = req.headers.authorization;
-    if (!authorizationHeader) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    const token = authorizationHeader.split(" ")[1];
-    const decodedToken = jwt.verify(
-      token,
-      JWT_SECRET
-    ) as unknown as TokenPayload;
-    const user = await getUserByEmail(decodedToken.email);
-    if (!user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    req.user = user;
-    next();
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Internal server error" });
+const validateResource = (schema: AnyZodObject) => (req: Request, res: Response, next: NextFunction) =>{
+  try{
+    schema.parse({
+      username: req.body.username,
+      email: req.body.email,
+      password: req.body.password,
+      first_name: req.body.first_name,
+      surname: req.body.surname,
+      identity_document: req.body.identity_document,
+      verified: req.body.verified,
+      dob: new Date(req.body.dob),
+      verification_code: req.body.verification_code,
+      password_reset_code: req.body.password_reset_code,
+      disabled: req.body.disabled,
+    });
+    next()
+  }catch(e: any){
+    console.log(req.body)
+    return res.status(400).send(e+"\n something wrong with schema")
   }
-}
+};
 
-interface AuthenticatedMerchantRequest extends Request {
-  merchant?: Merchant;
-}
 
-export async function authenticateMerchant(
-  req: AuthenticatedMerchantRequest,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    const authorizationHeader = req.headers.authorization;
-    if (!authorizationHeader) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    const token = authorizationHeader.split(" ")[1];
-    const decodedToken = jwt.verify(
-      token,
-      JWT_SECRET
-    ) as unknown as TokenPayload;
-    const merchant = await getMerchantByEmail(decodedToken.email);
-    if (!merchant) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    req.merchant = merchant;
-    next();
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-}
-
-export interface AuthenticatedUserRequest extends Request {
-  user?: User;
-}
+export default validateResource;

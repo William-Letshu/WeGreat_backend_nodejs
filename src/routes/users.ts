@@ -8,13 +8,16 @@ import {
   getUserEmail
 } from "../controllers/users";
 
+import validateResource from "../middleware/auth"
+import userSchema from "../schemas/users";
+
 const router = express.Router();
 
-router.get("/email",getUserEmail)
+router.get("/email",validateResource(userSchema),getUserEmail)
 router.get("/", getAllUsers);
-router.get("/:id", getUser);
-router.post("/", createNewUser);
-router.put("/:id", updateUserById);
-router.delete("/:id", deleteUserById);
+router.get("/:id",validateResource(userSchema), getUser);
+router.post("/",validateResource(userSchema), createNewUser);
+router.put("/:id",validateResource(userSchema), updateUserById);
+router.delete("/:id",validateResource(userSchema), deleteUserById);
 
 export default router;
