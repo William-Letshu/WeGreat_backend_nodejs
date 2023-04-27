@@ -11,7 +11,7 @@ export async function createNewMessage(req: Request, res: Response) {
         sender_id,
         content
       );
-    res.status(201).json(newMessage);
+    res.status(200).json(newMessage);
   } catch (error) {
     res.status(500).json({ message: "Error creating message" });
   }
@@ -22,7 +22,7 @@ export async function getMessage(req: Request, res: Response) {
     const id = parseInt(req.params.id);
     const message = await getMessageById(id);
     if (message) {
-      res.json(message);
+      res.status(200).json(message);
     } else {
       res.status(404).json({ message: "Message not found" });
     }

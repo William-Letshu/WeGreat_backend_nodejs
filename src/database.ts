@@ -6,6 +6,7 @@ import { Booking } from "./models/Booking";
 import { Conversation } from "./models/Conservation";
 import { Message } from "./models/Message";
 import bcrypt from 'bcrypt';
+import { encrypt, decrypt } from "./utils/encryption";
 
 require("dotenv").config();
 
@@ -31,20 +32,32 @@ async function getUserById(id: number): Promise<User | null> {
 async function createUser(user: User): Promise<User> {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(user.password, salt);
+  const encryptID = encrypt(user.identity_document as string)
+  const encryptEmail = encrypt(user.email)
+  const encryptFirstName = encrypt(<string> user.first_name)
+  const encryptLastName = encrypt(<string> user.surname)
+  const encryptUserName = encrypt(<string> user.username)
+  let encryptPhone = undefined
+
+  if (user.phone_number != undefined){
+    encryptPhone = encrypt(user.phone_number)
+  }
+  
 
   const result = await pool.query(
-    `INSERT INTO users (username, email, password, first_name, second_names, surname, identity_document, verified, dob, verification_code, password_reset_code, disabled)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+    `INSERT INTO users (username, email, password, first_name, second_names, surname, identity_document, verified, dob,phone_number, verification_code, password_reset_code, disabled)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
     [
-      user.username,
-      user.email,
+      encryptUserName,
+      encryptEmail,
       hashedPassword,
-      user.first_name,
+      encryptFirstName,
       user.second_names,
-      user.surname,
-      user.identity_document,
+      encryptLastName,
+      encryptID,
       user.verified,
       user.dob,
+      encryptPhone,
       user.verification_code,
       user.password_reset_code,
       user.disabled,

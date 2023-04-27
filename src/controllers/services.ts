@@ -12,7 +12,7 @@ import { Service } from "../models/Service";
 export async function getAllServices(req: Request, res: Response) {
   try {
     const services = await getServices();
-    res.json({ services });
+    res.status(200).json({ services });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Internal server error" });
@@ -70,7 +70,7 @@ export async function deleteServiceById(req: Request, res: Response) {
   try {
     const deleted = await deleteService(parseInt(id));
     if (deleted) {
-      res.json({ message: "Service deleted successfully" });
+      res.status(200).json({ message: "Service deleted successfully" });
     } else {
       res.status(404).json({ message: "Service not found" });
     }

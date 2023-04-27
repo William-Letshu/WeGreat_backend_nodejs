@@ -11,6 +11,7 @@ export class User {
   identity_document!: string;
   verified: boolean = false;
   dob!: Date;
+  phone_number!: string;
   verification_code?: string;
   password_reset_code?: string;
   disabled: boolean = false;
