@@ -29,14 +29,15 @@ async function getUserById(id: number): Promise<User | null> {
   return result.rowCount ? new User(result.rows[0]) : null;
 }
 
+async function isPasswordMatch(plainPassword: string, hashedPassword: string): Promise<boolean> {
+  const match = await bcrypt.compare(plainPassword, hashedPassword);
+  return match;
+}
+
 async function createUser(user: User): Promise<User> {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(user.password, salt);
   const encryptID = encrypt(user.identity_document as string)
-  const encryptEmail = encrypt(user.email)
-  const encryptFirstName = encrypt(<string> user.first_name)
-  const encryptLastName = encrypt(<string> user.surname)
-  const encryptUserName = encrypt(<string> user.username)
   let encryptPhone = undefined
 
   if (user.phone_number != undefined){
@@ -48,12 +49,12 @@ async function createUser(user: User): Promise<User> {
     `INSERT INTO users (username, email, password, first_name, second_names, surname, identity_document, verified, dob,phone_number, verification_code, password_reset_code, disabled)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
     [
-      encryptUserName,
-      encryptEmail,
+      user.username,
+      user.email,
       hashedPassword,
-      encryptFirstName,
+      user.first_name,
       user.second_names,
-      encryptLastName,
+      user.surname,
       encryptID,
       user.verified,
       user.dob,
@@ -96,10 +97,17 @@ async function deleteUser(id: number): Promise<boolean> {
   return result.rowCount > 0;
 }
 
-async function getUserByEmail(email:string) {
-  const result = await pool.query("SELECT * FROM users WHERE email = $1", [email])
+async function getUserByEmail(email: string): Promise<User | null> {
+  // Use the email parameter as is
+  const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
   return result.rowCount ? new User(result.rows[0]) : null;
 }
+
+async function getUserByUserName(username: string){
+  const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+  return result.rowCount ? new User(result.rows[0]) : null;
+}
+
 
 // TODO: Implement similar CRUD operations for the Merchant, Service, and Booking models
 
@@ -109,7 +117,9 @@ export {
   createUser,
   updateUser,
   deleteUser,
-  getUserByEmail
+  getUserByEmail,
+  isPasswordMatch,
+  getUserByUserName
   // TODO: Export the CRUD operations for the Merchant, Service, and Booking models
 };
 
@@ -180,6 +190,11 @@ async function getMerchants(): Promise<Merchant[]> {
     const result = await pool.query("SELECT * FROM merchants WHERE email = $1", [email]);
     return result.rowCount ? new Merchant(result.rows[0]) : null;
   }
+
+  async function getMerchantByUserName(username: string): Promise<Merchant | null> {
+    const result = await pool.query("SELECT * FROM merchants WHERE username = $1", [username]);
+    return result.rowCount ? new Merchant(result.rows[0]) : null;
+  }
   
   // Export the merchant CRUD operations
   export {
@@ -188,7 +203,8 @@ async function getMerchants(): Promise<Merchant[]> {
     createMerchant,
     updateMerchant,
     deleteMerchant,
-    getMerchantByEmail
+    getMerchantByEmail,
+    getMerchantByUserName
   };
 
 // Service CRUD operations

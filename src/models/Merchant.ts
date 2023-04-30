@@ -11,7 +11,7 @@ export class Merchant {
   verified: boolean = false;
   dob!: Date;
   phone_number?: string;
-  password!: string | Buffer;
+  password!: string;
 
   constructor(init?: Partial<Merchant>) {
     Object.assign(this, init);
